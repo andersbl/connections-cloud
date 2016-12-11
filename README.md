@@ -4,7 +4,7 @@ A basic Connections Cloud JS client.
 
 # usage
 ```javascript
-var connections = require('@ics-demo/ConnectionsCloud');
+var connections = require('@ics-demo/connections-cloud');
 var client = new connections('apps.na.collabserv.com', process.env.NA_USER,
   process.env.NA_PASSWORD);
 client.forumTopics('658dcc36-6d2d-4508-9dc8-87332fbbab19', (err, json) => {
