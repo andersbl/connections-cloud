@@ -1,63 +1,37 @@
 'use strict';
 
-var restify = require('restify'),
-	async = require('async');
+var request = require('request'),
+		async = require('async');
 
 class ConnectionsCloud {
 	constructor (server, username, password) {
-		this.client = restify.createStringClient({
-			url: 'https://' + server,
-			// TODO likely needs Restify 5.x
-			// followRedirects: true
-		});
-
-		this.client.basicAuth(username, password);
+		this.server = server;
+		this.username = username;
+		this.password = password;
 		this.formatter = require('@ics-demo/cnx2js');
 		this.lang = 'en_us';
 	}
 
 	_execute(path, callback, raw) {
-		console.log(`connecting to ${path} ...`);
-		this.client.get(path, (err, req, res, content) => {
-			console.log(`${path} responded with ${res.statusCode} ${res.statusMessage}`); // verbose
+		var url = `https://${this.server}${path}`;
 
-			// TODO Ugh need Restify to do this for us
-			if(res.statusCode == 301 || res.statusCode == 302) {
-				var redirectServer = res.headers.location.substring(
-					0, res.headers.location.indexOf(".com")+4);
-				var redirectPath = res.headers.location.substring(
-					res.headers.location.indexOf(".com")+4);
+		console.log(`connecting to ${url} user ${this.username} using ${this.password.replace(/./g, '*')}`);
 
-				// TODO possibly need to handle formatting, but this is expected only
-				// for media downloads
-				restify.createStringClient({ url: redirectServer }).get(redirectPath,
-					(err, req, res, content) => {
-						console.warn(`following redirect to ${redirectServer}${redirectPath}`)
-						if(!err) {
-							callback(null, content);
-						} else {
-							callback({
-								items : [],
-								code : err.statusCode,
-								error : err.body.trim()
-							});
-						}
-				});
-
-				// bailout since the callback is handled in redirect client
-				return;
-			}
+		request({
+			uri: url,
+			followRedirects: true
+		}, (err, res, content) => {
 
 			if(err) {
-				console.error(`${path} responded with ${err.body.trim()}`);
+				console.error(`${path} responded with ${err}`);
 				// handle the error returned from the server
-				// err is restify HttpError
 				return callback({
 					items : [],
 					code : err.statusCode,
-					error : err.body.trim()
+					error : err
 				});
 			} else {
+				// console.log(`${path} responded with ${res.statusCode} ${res.statusMessage}`); // verbose
 				if(raw) {
 					// don't format and return raw content
 					callback(null, content);
@@ -65,7 +39,7 @@ class ConnectionsCloud {
 					this.formatter.format(content, 'items', callback);
 				}
 			}
-		});
+		}).auth(this.username, this.password, true);
 	}
 
 	communityApps(handle, callback) {
@@ -138,7 +112,10 @@ class ConnectionsCloud {
 					});
 				} else {
 					// bypassing downoad of content
-					// the content property will content something like a link
+					// manually set the content to empty
+					for(var i in json.items) {
+						json.items[i].content = '';
+					}
 					callback(null, json);
 				}
 			} else {
