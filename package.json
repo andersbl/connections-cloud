@@ -1,6 +1,6 @@
 {
   "name": "@ics-demo/connections-cloud",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "IBM Connections Cloud JS client. ",
   "main": "ConnectionsCloud.js",
   "scripts": {
@@ -17,6 +17,12 @@
   "author": "van_staub@us.ibm.com",
   "license": "Apache-2.0",
   "dependencies": {
-    "@ics-demo/cnx2js": "^1.0.2"
+    "@ics-demo/cnx2js": "^1.0.2",
+    "async": "^2.1.4",
+    "request": "^2.79.0"
+  },
+  "devDependencies": {
+    "dotenv": "^2.0.0",
+    "jasmine": "^2.5.2"
   }
 }
