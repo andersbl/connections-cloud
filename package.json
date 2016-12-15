@@ -1,6 +1,6 @@
 {
   "name": "@ics-demo/connections-cloud",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "IBM Connections Cloud JS client. ",
   "main": "ConnectionsCloud.js",
   "scripts": {
