@@ -4,22 +4,65 @@ var request = require('request'),
 		async = require('async');
 
 class ConnectionsCloud {
-	constructor (server, username, password) {
-		this.server = server;
+	constructor (server, username, password, isAppPassword) {
+		this.url = `https://${server}`;
+
+		// standard authentication information
 		this.username = username;
 		this.password = password;
+
+		// formatter used to convert ATOM to ...
 		this.formatter = require('@ics-demo/cnx2js');
-		this.lang = 'en_us';
+
+		this.lang = 'en_us';	// required language parameter
+
+		this.isAppPassword = isAppPassword;	// special handling for app passwords
+
+		// cookie jar; uses specific jar for this client rather than global
+		this.jar = request.jar();
 	}
 
-	_execute(path, callback, raw) {
-		var url = `https://${this.server}${path}`;
+	login(callback) {
+		// create login URL based on type of user account - either user or shared
+		var path = this.isAppPassword ? '/eai/auth/basicMobile' : '';
 
-		console.log(`connecting to ${url} user ${this.username} using ${this.password.replace(/./g, '*')}`);
+		// user and app password requires "app id" header for successful login
+		var headers = this.isAppPassword ? {'IBM-APP-ID' : '5CE284FA93A0B6CB'} : {};
+
+		var url = this.url + path;
+
+		console.log(`Logging in to
+			${url}
+			user ${this.username}
+			using ${this.password.replace(/./g, '*')}
+			with ${JSON.stringify(headers)}`
+		);
 
 		request({
 			uri: url,
-			followRedirects: true
+			followRedirects: true,
+			jar: this.jar,
+			headers: headers
+		}, (err, res, content) => {
+			if(res.statusCode === 200) {
+				callback(null);
+			} else if(res.statusCode === 401) {
+				console.error(`failed to login`);
+				callback(content);
+			} else {
+				console.error(`unexpected response ${res.statusCode} on login`);
+				callback(content);
+			}
+		}).auth(this.username, this.password, true);
+	}
+
+	_execute(path, callback, raw) {
+		console.log(`executing ${this.url}${path}`);
+
+		request({
+			uri: this.url + path,
+			followRedirects: true,
+			jar: this.jar
 		}, (err, res, content) => {
 
 			if(err) {
@@ -39,7 +82,7 @@ class ConnectionsCloud {
 					this.formatter.format(content, 'items', callback);
 				}
 			}
-		}).auth(this.username, this.password, true);
+		});
 	}
 
 	communityApps(handle, callback) {

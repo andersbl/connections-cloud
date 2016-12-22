@@ -1,16 +1,42 @@
 # connections-cloud
 
-A basic Connections Cloud JS client.
+A Connections Cloud Javascript client.
 
 # usage
+To create a server-based application with a shared ID use the
+following.
+
 ```javascript
 var connections = require('@ics-demo/connections-cloud');
-var client = new connections('apps.na.collabserv.com', process.env.NA_USER,
-  process.env.NA_PASSWORD);
-client.forumTopics('658dcc36-6d2d-4508-9dc8-87332fbbab19', (err, json) => {
+var client = new connections('apps.na.collabserv.com', 'functional_id@us.ibm.com',
+  'password');
+
+client.login((err) => {
   if(!err) {
-		console.log(json);
-	}
+    client.forumTopics('658dcc36-6d2d-4508-9dc8-87332fbbab19', (err, json) => {
+      if(!err) {
+    		console.log(json);
+    	}
+    });
+  }
+});
+```
+
+To create a user-based application use the following. This will use application passwords.  You will need to create one prior to using.
+See [Generating Application Passwords](https://www.ibm.com/support/knowledgecenter/SSL3JX/welcome/t_use_application_passwords.html).
+```javascript
+var connections = require('@ics-demo/connections-cloud');
+var client = new connections('apps.na.collabserv.com', 'your_id@us.ibm.com',
+  'aswe frew gtrs tsew', true);
+
+client.login((err) => {
+  if(!err) {
+    client.forumTopics('658dcc36-6d2d-4508-9dc8-87332fbbab19', (err, json) => {
+      if(!err) {
+    		console.log(json);
+    	}
+    });
+  }
 });
 ```
 
