@@ -21,7 +21,7 @@ describe("connections-cloud", function() {
       },
       {
         dc : 'apps.na.collabserv.com',
-        id : 'c48a679e-6411-475b-baf9-1fe77d5a9e13',
+        id : 'af686e84-9e38-4101-8026-07c6c92cea2c',
         user : {
           id : '21188',
           username : process.env.PRIVATE_USER,
@@ -172,6 +172,10 @@ describe("connections-cloud", function() {
   it('forumTopics', function(done) {
     log.info('forumTopics');
 
+    var options = {
+      ps : '25'
+    }
+
     async.each(data.communities,
       (community, callback) => {
         community.client.forumTopics(community.forumId,
@@ -187,7 +191,7 @@ describe("connections-cloud", function() {
               }
             }
             callback();
-          });
+          }, options);
       },
       (err) => {
         done();

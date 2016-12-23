@@ -18,8 +18,6 @@ class ConnectionsCloud {
 		// formatter used to convert ATOM to ...
 		this.formatter = require('@ics-demo/cnx2js');
 
-		this.lang = 'en_us';	// required language parameter
-
 		this.isAppPassword = isAppPassword;	// special handling for app passwords
 
 		// cookie jar; uses specific jar for this client rather than global
@@ -82,7 +80,7 @@ class ConnectionsCloud {
 	}
 
 	_execute(path, callback, raw) {
-		log.debug(`executing ${this.url}${path}`);
+		log.info(`executing ${this.url}${path}`);
 		log.debug(`sending ${this.jar.getCookies(this.url)} cookies`);
 
 		request({
@@ -123,39 +121,57 @@ class ConnectionsCloud {
 		});
 	}
 
+	_createQuery(options) {
+		var query = '';
+
+		/*
+		 * do not omit the lang parameter or else you will get no response
+		 */
+
+		if(options !== undefined) {
+			if(options.lang === undefined) {
+				options.lang = 'en_us';
+			}
+
+			for(var opt in options) {
+				query= query + `${opt}=${options[opt]}&`;
+			}
+		} else {
+			query= 'lang=en_us';
+		}
+
+		return query;
+	}
+
 	communityApps(handle, callback) {
 	 this._execute(`/communities/service/atom/community/remoteApplications?communityUuid=${handle}`, callback);
 	}
 
-	/*
-	 * do not omit the lang parameter or else you will get no response
-	 */
-
-	blogEntries(handle, callback) {
-		this._execute(`/blogs/${handle}/feed/entries/atom?lang=${this.lang}`, callback);
+	blogEntries(handle, callback, options) {
+		this._execute(`/blogs/${handle}/feed/entries/atom?${this._createQuery(options)}`, callback);
 	}
 
-	blogComments(handle, callback) {
-		this._execute(`/blogs/${handle}/feed/comments/atom?lang=${this.lang}`, callback);
+	blogComments(handle, callback, options) {
+		this._execute(`/blogs/${handle}/feed/comments/atom?${this._createQuery(options)}`, callback);
 	}
 
-	blogEntry(handle, entry, callback){
-		this._execute(`/blogs/${handle}/api/entries/${entry}?lang=${this.lang}`, callback);
+	blogEntry(handle, entry, callback, options){
+		this._execute(`/blogs/${handle}/api/entries/${entry}?${this._createQuery(options)}`, callback);
 	}
 
-	blogEntryComments(handle, entry, callback){
-		this._execute(`/blogs/${handle}/api/entrycomments/${entry}?lang=${this.lang}`, callback);
+	blogEntryComments(handle, entry, callback, options){
+		this._execute(`/blogs/${handle}/api/entrycomments/${entry}?${this._createQuery(options)}`, callback);
 	}
 
-	forumTopics(handle, callback) {
-		this._execute(`/forums/atom/topics?communityUuid=${handle}&lang=${this.lang}`, callback);
+	forumTopics(handle, callback, options) {
+		this._execute(`/forums/atom/topics?communityUuid=${handle}&${this._createQuery(options)}`, callback);
 	}
 
-	forumTopic(handle, callback, includeReplies) {
+	forumTopic(handle, callback, includeReplies, options) {
 		if(includeReplies) {
-			this._execute(`/forums/atom/replies?topicUuid=${handle}&lang=${this.lang}`, callback);
+			this._execute(`/forums/atom/replies?topicUuid=${handle}&${this._createQuery(options)}`, callback);
 		} else {
-			this._execute(`/forums/atom/topic?topicUuid=${handle}&lang=${this.lang}`, callback);
+			this._execute(`/forums/atom/topic?topicUuid=${handle}&${this._createQuery(options)}`, callback);
 		}
 	}
 
@@ -173,8 +189,8 @@ class ConnectionsCloud {
 				});
 	}
 
-	wikiPages(handle, callback, downloadContent) {
-		this._execute(`/wikis/basic/api/wiki/${handle}/feed`, (err, json) => {
+	wikiPages(handle, callback, downloadContent, options) {
+		this._execute(`/wikis/basic/api/wiki/${handle}/feed?${this._createQuery(options)}`, (err, json) => {
 			if(!err) {
 				if(downloadContent) {
 					// process every page and download
@@ -205,8 +221,8 @@ class ConnectionsCloud {
 		});
 	}
 
-	wikiPage(handle, page, callback) {
-		this._execute(`/wikis/basic/api/wiki/${handle}/page/${page}/entry`, (err, json) => {
+	wikiPage(handle, page, callback, options) {
+		this._execute(`/wikis/basic/api/wiki/${handle}/page/${page}/entry?${this._createQuery(options)}`, (err, json) => {
 			// wiki pags don't include content in the ATOM feed - need to download,
 			// <content type="text/html"
 			// src="/wikis/basic/api/wiki/b3fc070c-ff0c-405d-9dd9-f2e545594c61/page/07553add-f34d-43a8-964e-2c31a90046ad/media?convertTo=html">
@@ -246,8 +262,8 @@ class ConnectionsCloud {
 		}, true); // make sure to specify true to get the raw content
 	}
 
-	wikiPageComments(handle, page, callback) {
-		this._execute(`/wikis/basic/api/wiki/${handle}/page/${page}/feed`, callback);
+	wikiPageComments(handle, page, callback, options) {
+		this._execute(`/wikis/basic/api/wiki/${handle}/page/${page}/feed?${this._createQuery(options)}`, callback);
 	}
 }
 

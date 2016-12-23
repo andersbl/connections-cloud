@@ -58,6 +58,27 @@ Creates an object with the items in the respective Connections Cloud app.
     ]
   }
 ```
+# options
+Connections Cloud query parameters are supported using the ```options``` argument.
+If omitted, Connections Cloud defaults are used per IBM documentation.
+
+```javascript
+var options = {
+  ps : '25'
+}
+...
+client.login((err) => {
+  if(!err) {
+    client.forumTopics('658dcc36-6d2d-4508-9dc8-87332fbbab19', (err, json) => {
+      if(!err) {
+    		console.log(json);
+    	}
+    }, options);
+  }
+});
+```
+
+
 # supports
 * Blog Entries
 * Forum Topics
