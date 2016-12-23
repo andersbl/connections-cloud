@@ -3,6 +3,10 @@
 var request = require('request'),
 		async = require('async');
 
+// set up logging
+const log = require('loglevel').getLogger("connections-cloud");
+log.setLevel(process.env.connections_cloudLevel === undefined ? 'error' : process.env.connections_cloudLevel);
+
 class ConnectionsCloud {
 	constructor (server, username, password, isAppPassword) {
 		this.url = `https://${server}`;
@@ -24,49 +28,70 @@ class ConnectionsCloud {
 
 	login(callback) {
 		// create login URL based on type of user account - either user or shared
-		var path = this.isAppPassword ? '/eai/auth/basicMobile' : '';
+		var path = this.isAppPassword ? '/eai/auth/basicMobile' : '/pkmslogin.form';
 
-		// user and app password requires "app id" header for successful login
-		var headers = this.isAppPassword ? {'IBM-APP-ID' : '5CE284FA93A0B6CB'} : {};
+		// depending on the login method, headers or form data will be required
+		var data = this.isAppPassword ?
+			// user and app password requires "app id" header for successful login
+			{'IBM-APP-ID' : '5CE284FA93A0B6CB'} :
+			// form data
+			{'login-form-type' : 'pwd',
+				'error-code': '',
+				'username' : this.username,
+				'password' : this.password,
+				'show_login' : 'showLoginAgain',
+			};
 
 		var url = this.url + path;
 
-		console.log(`Logging in to
-			${url}
-			user ${this.username}
-			using ${this.password.replace(/./g, '*')}
-			with ${JSON.stringify(headers)}`
-		);
+		log.info(`Logging in to ${url}`);
+		log.info(`user ${this.username}`);
+		log.info(`using ${this.password.replace(/./g, '*')}`);
 
-		request({
-			uri: url,
-			followRedirects: true,
-			jar: this.jar,
-			headers: headers
-		}, (err, res, content) => {
-			if(res.statusCode === 200) {
-				callback(null);
-			} else if(res.statusCode === 401) {
-				console.error(`failed to login`);
-				callback(content);
-			} else {
-				console.error(`unexpected response ${res.statusCode} on login`);
-				callback(content);
-			}
-		}).auth(this.username, this.password, true);
+		if(this.isAppPassword) {
+			request({
+				uri: url,
+				jar: this.jar,
+				headers: data
+			}, (err, res, content) => {
+				this._loginDone(err, res, content, callback);
+			}).auth(this.username, this.password, true);
+		} else {
+			request.post({
+				uri: url,
+				jar: this.jar
+			}, (err, res, content) => {
+				this._loginDone(err, res, content, callback);
+			}).form(data);
+		}
+	}
+
+	_loginDone(err, res, content, callback) {
+		// 302 occurs on login to pkmslogin.form
+		if(res.statusCode === 200 || res.statusCode === 302) {
+			log.info(`Successfully logged in ${this.username}`);
+			log.debug(`received ${this.jar.getCookies(this.url)} cookies`);
+
+			setInterval(this.login, 1000*3600*12);	// re-login in 12 hours
+
+			callback(null);
+		} else {
+			log.error(`Failed to login ${res.statusCode} ${res.statusMessage}`);
+			callback(content);
+		}
 	}
 
 	_execute(path, callback, raw) {
-		console.log(`executing ${this.url}${path}`);
+		log.debug(`executing ${this.url}${path}`);
+		log.debug(`sending ${this.jar.getCookies(this.url)} cookies`);
 
 		request({
 			uri: this.url + path,
 			followRedirects: true,
 			jar: this.jar
 		}, (err, res, content) => {
-
 			if(err) {
-				console.error(`${path} responded with ${err}`);
+				log.error(`${path} responded with ${err}`);
 				// handle the error returned from the server
 				return callback({
 					items : [],
@@ -74,12 +99,25 @@ class ConnectionsCloud {
 					error : err
 				});
 			} else {
-				// console.log(`${path} responded with ${res.statusCode} ${res.statusMessage}`); // verbose
-				if(raw) {
-					// don't format and return raw content
-					callback(null, content);
-				} else {
-					this.formatter.format(content, 'items', callback);
+				log.debug(`${path} responded with ${res.statusCode} ${res.statusMessage}`);
+				log.debug(`${path} responded with content body ${content}`);
+
+				switch(res.statusCode) {
+					case 401: // the user lacks access to the app
+					case 404: // the app is likely not installed or user error
+						return callback({
+							items : [],
+							code : res.statusCode,
+							error : res.statusMessage
+						});
+					default:
+						if(raw) {
+							// don't format and return raw content
+							callback(null, content);
+						} else {
+							this.formatter.format(content, 'items', callback);
+						}
+					break;
 				}
 			}
 		});
@@ -113,12 +151,12 @@ class ConnectionsCloud {
 		this._execute(`/forums/atom/topics?communityUuid=${handle}&lang=${this.lang}`, callback);
 	}
 
-	forumTopic(handle, callback) {
-		this._execute(`/forums/atom/topic?topicUuid=${handle}&lang=${this.lang}`, callback);
-	}
-
-	forumTopicReplies(handle, callback) {
-		this._execute(`/forums/atom/replies?topicUuid=${handle}&lang=${this.lang}`, callback);
+	forumTopic(handle, callback, includeReplies) {
+		if(includeReplies) {
+			this._execute(`/forums/atom/replies?topicUuid=${handle}&lang=${this.lang}`, callback);
+		} else {
+			this._execute(`/forums/atom/topic?topicUuid=${handle}&lang=${this.lang}`, callback);
+		}
 	}
 
 	profileTags(userid, callback) {
@@ -145,7 +183,7 @@ class ConnectionsCloud {
 							if(!err) {
 								item.content = html;
 							} else {
-								console.error(`Failed to get content for ${item.id}`);
+								log.error(`Failed to get content for ${item.id}`);
 							}
 							cb(null, item);	// tell the async library we're done
 						});
@@ -196,11 +234,11 @@ class ConnectionsCloud {
 		// /version/dc826979-b272-447d-9b3b-02bac2ca6069/media
 		var url = `/wikis/basic/api/wiki/${handle}/page/${item.id}/version/${item.version}/media`;
 
-		console.log(`dowloading wiki html from ${url}`);
+		log.debug(`dowloading wiki html from ${url}`);
 
 		this._execute(url, (err, html) => {
 			if(!err) {
-				console.log(`downloaded HTML of size ${html.length}`)
+				log.debug(`downloaded HTML of size ${html.length}`)
 				callback(null, html);
 			} else {
 				callback(err);

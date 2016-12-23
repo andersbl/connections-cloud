@@ -1,6 +1,6 @@
 {
   "name": "@ics-demo/connections-cloud",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "IBM Connections Cloud JS client. ",
   "main": "ConnectionsCloud.js",
   "scripts": {
@@ -19,6 +19,7 @@
   "dependencies": {
     "@ics-demo/cnx2js": "^1.0.2",
     "async": "^2.1.4",
+    "loglevel": "^1.4.1",
     "request": "^2.79.0"
   },
   "devDependencies": {
