@@ -15,15 +15,21 @@
     "connections"
   ],
   "author": "van_staub@us.ibm.com",
+  "contributors": [{
+    "name": "Anders Baunstrup Larsen",
+    "email": "anders.larsen@dk.ibm.com"
+  }],
   "license": "Apache-2.0",
   "dependencies": {
     "@ics-demo/cnx2js": "^1.0.2",
     "async": "^2.1.4",
     "loglevel": "^1.4.1",
-    "request": "^2.79.0"
+    "request": "^2.79.0",
+    "stream": "0.0.2",
+    "tmp": "0.0.33"
   },
   "devDependencies": {
-    "dotenv": "^2.0.0",
+ 	"dotenv": "^2.0.0",
     "jasmine": "^2.5.2"
   }
 }
