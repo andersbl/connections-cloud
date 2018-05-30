@@ -498,6 +498,11 @@ class ConnectionsCloud {
     
     this._executeCMIS(path, '', CMIS, callback, headers);
   }
+
+  getFilesInFolder(collectionId, options, callback){
+  
+    this._execute(`/files/form/api/collection/${collectionId}/feed?${this._createQuery(options)}`, callback);
+  }
 }
 
 

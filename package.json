@@ -1,35 +1,38 @@
 {
-  "name": "@ics-demo/connections-cloud",
+  "name": "connections-cloud",
   "version": "1.0.6",
-  "description": "IBM Connections Cloud JS client. ",
+  "description": "An unofficial IBM Connections Cloud JS client. ",
   "main": "ConnectionsCloud.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jasmine"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.ibm.com/van-staub/connections-cloud.git"
+    "url": "https://github.com/van-ibm/connections-cloud.git"
   },
   "keywords": [
     "connectionscloud",
     "connections"
   ],
   "author": "van_staub@us.ibm.com",
-  "contributors": [{
-    "name": "Anders Baunstrup Larsen",
-    "email": "anders.larsen@dk.ibm.com"
-  }],
+  "contributors": [
+    {
+      "name": "Anders Baunstrup Larsen",
+      "email": "anders.larsen@dk.ibm.com"
+    }
+  ],
   "license": "Apache-2.0",
   "dependencies": {
-    "@ics-demo/cnx2js": "^1.0.2",
+    "cnx2js": "^1.0.2",
     "async": "^2.1.4",
+    "feedparser": "^2.2.9",
     "loglevel": "^1.4.1",
     "request": "^2.79.0",
     "stream": "0.0.2",
     "tmp": "0.0.33"
   },
   "devDependencies": {
- 	"dotenv": "^2.0.0",
+    "dotenv": "^2.0.0",
     "jasmine": "^2.5.2"
   }
 }

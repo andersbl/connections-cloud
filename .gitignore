@@ -3,3 +3,4 @@ node_modules/
 .project
 .env
 package-lock.json
+test.js
