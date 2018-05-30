@@ -29,7 +29,8 @@
     "loglevel": "^1.4.1",
     "request": "^2.79.0",
     "stream": "0.0.2",
-    "tmp": "0.0.33"
+    "tmp": "0.0.33",
+    "winston": "^2.4.0"
   },
   "devDependencies": {
     "dotenv": "^2.0.0",
